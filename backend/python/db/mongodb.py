@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/chatware")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://httpgodmail:MongoDB@cluster0.cfeowwg.mongodb.net/")
 
 def get_db_connection():
     """

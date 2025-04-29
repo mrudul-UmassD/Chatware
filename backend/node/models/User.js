@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
       minlength: [8, 'Password should be at least 8 characters long'],
       select: false
     },
+    passwordChangeRequired: {
+      type: Boolean,
+      default: true // Require password change on first login
+    },
     profilePic: {
       type: String,
       default: 'default-profile.png'
@@ -45,6 +49,27 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now
     },
+    location: {
+      type: {
+        latitude: Number,
+        longitude: Number,
+        address: String,
+        lastUpdated: {
+          type: Date,
+          default: Date.now
+        }
+      },
+      default: null
+    },
+    locationHistory: [{
+      latitude: Number,
+      longitude: Number,
+      address: String,
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }],
     isActive: {
       type: Boolean,
       default: true

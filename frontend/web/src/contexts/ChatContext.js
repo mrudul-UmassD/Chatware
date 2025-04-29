@@ -1,14 +1,15 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
+import { useSocket } from './SocketContext';
 import { encryptionService } from '../services/EncryptionService';
 
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  const { user, socket, setSocket } = useAuth();
+  const { user } = useAuth();
+  const { socket } = useSocket();
   const navigate = useNavigate();
   
   const [chats, setChats] = useState([]);
@@ -48,18 +49,6 @@ export const ChatProvider = ({ children }) => {
     
     initializeEncryption();
   }, [user]);
-
-  // Socket connection
-  useEffect(() => {
-    if (user) {
-      const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
-      setSocket(newSocket);
-
-      return () => {
-        newSocket.disconnect();
-      };
-    }
-  }, [user, setSocket]);
 
   // Socket event listeners
   useEffect(() => {

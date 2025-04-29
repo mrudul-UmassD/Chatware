@@ -1,29 +1,42 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Container, Row, Col, Button } from 'react-bootstrap';
+import { Box, Container, Typography, Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { SentimentVeryDissatisfied as SadFaceIcon } from '@mui/icons-material';
 
 const NotFound = () => {
+  const navigate = useNavigate();
+
   return (
-    <Container fluid>
-      <Row className="justify-content-center align-items-center min-vh-100">
-        <Col xs={12} sm={10} md={8} lg={6} className="text-center">
-          <h1 className="display-1 fw-bold">404</h1>
-          <h3 className="mb-4">Page Not Found</h3>
-          <p className="text-muted mb-5">
-            The page you are looking for might have been removed, had its name changed,
-            or is temporarily unavailable.
-          </p>
-          <Button
-            as={Link}
-            to="/"
-            variant="primary"
-            size="lg"
-            className="px-5 py-3"
-          >
-            Go Back Home
-          </Button>
-        </Col>
-      </Row>
+    <Container maxWidth="md">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          textAlign: 'center',
+        }}
+      >
+        <SadFaceIcon sx={{ fontSize: 100, color: 'text.secondary', mb: 2 }} />
+        <Typography variant="h1" color="primary" gutterBottom>
+          404
+        </Typography>
+        <Typography variant="h4" gutterBottom>
+          Page Not Found
+        </Typography>
+        <Typography variant="body1" color="text.secondary" paragraph sx={{ maxWidth: 500 }}>
+          The page you're looking for doesn't exist or has been moved.
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate('/')}
+          sx={{ mt: 2 }}
+        >
+          Go to Home
+        </Button>
+      </Box>
     </Container>
   );
 };

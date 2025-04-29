@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { useAuth } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
 
 // Pages
 import Login from './pages/Login';
@@ -18,6 +19,7 @@ import SuperAdminSetup from './pages/SuperAdminSetup';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
+import PasswordChangeRequired from './components/PasswordChangeRequired';
 
 const theme = createTheme({
   palette: {
@@ -56,10 +58,25 @@ const theme = createTheme({
 
 function App() {
   const { user, loading } = useAuth();
+  const [showPasswordChangeDialog, setShowPasswordChangeDialog] = useState(false);
+
+  // Check if password change is required
+  useEffect(() => {
+    if (user && user.passwordChangeRequired) {
+      setShowPasswordChangeDialog(true);
+    } else {
+      setShowPasswordChangeDialog(false);
+    }
+  }, [user]);
+
+  // Handle successful password change
+  const handlePasswordChangeSuccess = () => {
+    setShowPasswordChangeDialog(false);
+  };
 
   if (loading) {
     return (
-      <div className="flex-center" style={{ height: '100vh' }}>
+      <div className="flex-center" style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -70,50 +87,61 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-        <Route path="/setup" element={<SuperAdminSetup />} />
-        
-        {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Chat />
-            </ProtectedRoute>
-          }
+      {/* Password change dialog */}
+      {user && showPasswordChangeDialog && (
+        <PasswordChangeRequired 
+          open={showPasswordChangeDialog}
+          user={user}
+          onSuccess={handlePasswordChangeSuccess}
         />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <UserProfile />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* Admin routes */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <SuperAdminRoute>
-              <UserManagement />
-            </SuperAdminRoute>
-          }
-        />
-        
-        {/* Not found route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      )}
+      <SocketProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+          <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+          <Route path="/setup" element={<SuperAdminSetup />} />
+          
+          {/* Protected routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Admin routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <SuperAdminRoute>
+                <UserManagement />
+              </SuperAdminRoute>
+            }
+          />
+          
+          {/* Not found route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </SocketProvider>
     </ThemeProvider>
   );
 }

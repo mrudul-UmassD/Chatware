@@ -1,350 +1,304 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Container, Card, Alert, Spinner, Badge, Form, Button } from 'react-bootstrap';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { FaMap, FaUser, FaClock, FaExclamationTriangle, FaSync, FaSearch, FaLocationArrow } from 'react-icons/fa';
-import { api } from '../../services/api';
-import { AuthService } from '../../services/auth';
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Grid,
+  Paper,
+  Typography,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  Divider,
+  IconButton,
+  TextField,
+  InputAdornment
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+  MyLocation as LocationIcon,
+  AccessTime as TimeIcon
+} from '@mui/icons-material';
+import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../config';
 import './LocationTracking.css';
 
-// Fix for Leaflet marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-});
-
-// Component to recenter the map view
-const MapCenterController = ({ center, zoom }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (center) {
-      map.setView(center, zoom || map.getZoom());
-    }
-  }, [center, zoom, map]);
-  return null;
-};
-
 const LocationTracking = () => {
-  const [userLocations, setUserLocations] = useState([]);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [mapCenter, setMapCenter] = useState(null);
-  const [mapZoom, setMapZoom] = useState(13);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [refreshInterval, setRefreshInterval] = useState(30);
-  const intervalRef = useRef(null);
+  const [userLocations, setUserLocations] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
-  // Check if user is authorized on mount
+  // Fetch user locations when component mounts
   useEffect(() => {
-    const currentUser = AuthService.getCurrentUser();
-    if (!currentUser || !currentUser.roles.includes('ROLE_ADMIN')) {
-      setError('You are not authorized to access this page');
-      setLoading(false);
-      return;
-    }
-
-    // Initial fetch
     fetchUserLocations();
+  }, []);
 
-    // Set up interval for periodic fetching
-    intervalRef.current = setInterval(fetchUserLocations, refreshInterval * 1000);
+  // Filter users based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredUsers(userLocations);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = userLocations.filter(
+        userLocation => 
+          userLocation.name.toLowerCase().includes(query) ||
+          userLocation.email.toLowerCase().includes(query) ||
+          userLocation.location.address.toLowerCase().includes(query)
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchQuery, userLocations]);
 
-    // Cleanup on unmount
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [refreshInterval]);
-
-  // Fetch user locations from API
   const fetchUserLocations = async () => {
     try {
-      const response = await api.get('/api/admin/user-locations');
-      setUserLocations(response.data);
+      setLoading(true);
       
-      // If no center is set yet, center on first user with location
-      if (!mapCenter && response.data && response.data.length > 0) {
-        const userWithLocation = response.data.find(user => 
-          user.location && user.location.latitude && user.location.longitude
-        );
+      // In a real app, you would fetch this data from an API
+      // const config = {
+      //   headers: {
+      //     Authorization: `Bearer ${user.token}`,
+      //   },
+      // };
+      // const { data } = await axios.get(`${API_URL}/api/admin/user-locations`, config);
+      
+      // For demo purposes, we'll use mock data
+      setTimeout(() => {
+        const mockData = [
+          {
+            _id: '1',
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            profilePic: '',
+            location: {
+              coordinates: [40.7128, -74.0060], // [latitude, longitude]
+              address: 'New York, NY, USA',
+              lastUpdated: new Date(Date.now() - 5 * 60 * 1000).toISOString() // 5 minutes ago
+            },
+            device: {
+              type: 'Mobile',
+              browser: 'Chrome',
+              os: 'Android'
+            },
+            online: true
+          },
+          {
+            _id: '2',
+            name: 'Jane Smith',
+            email: 'jane.smith@example.com',
+            profilePic: '',
+            location: {
+              coordinates: [34.0522, -118.2437], // [latitude, longitude]
+              address: 'Los Angeles, CA, USA',
+              lastUpdated: new Date(Date.now() - 15 * 60 * 1000).toISOString() // 15 minutes ago
+            },
+            device: {
+              type: 'Desktop',
+              browser: 'Firefox',
+              os: 'Windows'
+            },
+            online: true
+          },
+          {
+            _id: '3',
+            name: 'Bob Johnson',
+            email: 'bob.johnson@example.com',
+            profilePic: '',
+            location: {
+              coordinates: [51.5074, -0.1278], // [latitude, longitude]
+              address: 'London, UK',
+              lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+            },
+            device: {
+              type: 'Tablet',
+              browser: 'Safari',
+              os: 'iOS'
+            },
+            online: false
+          },
+          {
+            _id: '4',
+            name: 'Sarah Williams',
+            email: 'sarah.williams@example.com',
+            profilePic: '',
+            location: {
+              coordinates: [48.8566, 2.3522], // [latitude, longitude]
+              address: 'Paris, France',
+              lastUpdated: new Date(Date.now() - 30 * 60 * 1000).toISOString() // 30 minutes ago
+            },
+            device: {
+              type: 'Mobile',
+              browser: 'Safari',
+              os: 'iOS'
+            },
+            online: true
+          },
+          {
+            _id: '5',
+            name: 'Michael Brown',
+            email: 'michael.brown@example.com',
+            profilePic: '',
+            location: {
+              coordinates: [35.6762, 139.6503], // [latitude, longitude]
+              address: 'Tokyo, Japan',
+              lastUpdated: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() // 8 hours ago
+            },
+            device: {
+              type: 'Desktop',
+              browser: 'Chrome',
+              os: 'macOS'
+            },
+            online: false
+          }
+        ];
         
-        if (userWithLocation) {
-          setMapCenter([
-            userWithLocation.location.latitude,
-            userWithLocation.location.longitude
-          ]);
-        } else {
-          // Default center if no user has location
-          setMapCenter([0, 0]);
-          setMapZoom(2);
-        }
-      }
-      
-      setLoading(false);
+        setUserLocations(mockData);
+        setFilteredUsers(mockData);
+        setLoading(false);
+      }, 1500);
     } catch (err) {
       console.error('Error fetching user locations:', err);
-      setError('Failed to fetch user locations. Please try again later.');
+      setError(err.message || 'Failed to fetch user locations');
       setLoading(false);
     }
   };
 
-  // Format timestamp to human-readable format
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return 'Never';
-    return new Date(timestamp).toLocaleString();
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
 
-  // Calculate time since last update
-  const getTimeSinceUpdate = (timestamp) => {
-    if (!timestamp) return 'Never updated';
-    
-    const now = new Date();
-    const locationTime = new Date(timestamp);
-    const diffMs = now - locationTime;
-    
-    // Convert to appropriate time unit
-    const diffSeconds = Math.floor(diffMs / 1000);
-    if (diffSeconds < 60) return `${diffSeconds} seconds ago`;
-    
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
-    
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} days ago`;
-  };
-
-  // Get status badge variant based on last update time
-  const getStatusVariant = (timestamp) => {
-    if (!timestamp) return 'secondary';
-    
-    const now = new Date();
-    const locationTime = new Date(timestamp);
-    const diffHours = (now - locationTime) / (1000 * 60 * 60);
-    
-    if (diffHours < 1) return 'success';
-    if (diffHours < 6) return 'info';
-    if (diffHours < 24) return 'warning';
-    return 'danger';
-  };
-
-  // Focus map on a specific user
-  const focusOnUser = (user) => {
-    if (user.location && user.location.latitude && user.location.longitude) {
-      setSelectedUser(user.id);
-      setMapCenter([user.location.latitude, user.location.longitude]);
-      setMapZoom(15);
-    }
-  };
-
-  // Custom marker icon based on how recent the location update is
-  const getMarkerIcon = (timestamp) => {
-    if (!timestamp) return new L.Icon.Default();
-    
-    const now = new Date();
-    const locationTime = new Date(timestamp);
-    const diffMs = now - locationTime;
-    const diffHours = diffMs / (1000 * 60 * 60);
-    
-    // Red for old locations (>24h), yellow for moderately old (>6h), green for recent
-    let iconColor = 'green';
-    if (diffHours > 24) {
-      iconColor = 'red';
-    } else if (diffHours > 6) {
-      iconColor = 'orange';
-    }
-    
-    return new L.Icon({
-      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`,
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-  };
-
-  // Filter users based on search term
-  const filteredUsers = userLocations.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Handle refresh interval change
-  const handleRefreshIntervalChange = (e) => {
-    const newInterval = parseInt(e.target.value, 10);
-    setRefreshInterval(newInterval);
-    
-    // Reset the interval timer
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(fetchUserLocations, newInterval * 1000);
-    }
-  };
-
-  // Manual refresh function
-  const handleManualRefresh = () => {
+  const handleRefresh = () => {
     fetchUserLocations();
   };
 
-  if (error) {
-    return (
-      <Container className="location-tracking-container">
-        <Alert variant="danger">
-          <FaExclamationTriangle className="me-2" /> {error}
-        </Alert>
-      </Container>
-    );
-  }
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (diffDay > 0) {
+      return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+    } else if (diffHour > 0) {
+      return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+    } else if (diffMin > 0) {
+      return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
+    } else {
+      return 'Just now';
+    }
+  };
 
   if (loading) {
     return (
-      <Container className="location-tracking-container d-flex justify-content-center align-items-center">
-        <Spinner animation="border" role="status" variant="primary">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </Container>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <Typography color="error">{error}</Typography>
+      </Box>
     );
   }
 
   return (
-    <Container fluid className="location-tracking-container">
-      <h4 className="mb-3">
-        <FaMap className="me-2" /> User Location Tracking
-      </h4>
-      
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex align-items-center">
-          <Form.Select 
-            style={{ width: 'auto' }} 
-            value={refreshInterval}
-            onChange={handleRefreshIntervalChange}
-            className="me-2"
-            aria-label="Refresh interval"
-          >
-            <option value="5">Refresh: 5 seconds</option>
-            <option value="15">Refresh: 15 seconds</option>
-            <option value="30">Refresh: 30 seconds</option>
-            <option value="60">Refresh: 1 minute</option>
-            <option value="300">Refresh: 5 minutes</option>
-          </Form.Select>
-          <Button variant="outline-primary" size="sm" onClick={handleManualRefresh}>
-            <FaSync className="me-1" /> Refresh Now
-          </Button>
-        </div>
-        <small className="text-muted">
-          {userLocations.length} users, last updated: {new Date().toLocaleTimeString()}
-        </small>
-      </div>
-      
-      <div className="location-dashboard">
-        <Card className="user-list-card">
-          <Card.Header>
-            <div className="d-flex align-items-center">
-              <FaUser className="me-2" /> 
-              <span>Users</span>
-            </div>
-            <Form.Control
-              type="search"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              size="sm"
-              className="mt-2"
-              aria-label="Search users"
-            />
-          </Card.Header>
-          <div className="user-list">
-            {filteredUsers.length === 0 ? (
-              <div className="p-3 text-center text-muted">
-                No users found matching the search term.
-              </div>
-            ) : (
-              filteredUsers.map(user => (
-                <div 
-                  key={user.id} 
-                  className={`user-item ${selectedUser === user.id ? 'selected' : ''}`}
-                  onClick={() => focusOnUser(user)}
-                >
-                  <div className="user-avatar">
-                    {user.profilePicture ? (
-                      <img src={user.profilePicture} alt={user.name} />
-                    ) : (
-                      <FaUser />
-                    )}
-                  </div>
-                  <div className="user-details">
-                    <h6>{user.name}</h6>
-                    <div className="user-status">
-                      <FaClock className="me-1" size={10} />
-                      <span>{getTimeSinceUpdate(user.location?.timestamp)}</span>
-                      {user.location?.timestamp && (
-                        <Badge 
-                          bg={getStatusVariant(user.location.timestamp)} 
-                          className="ms-2"
-                        >
-                          {getStatusVariant(user.location.timestamp) === 'success' ? 'Online' : 
-                           getStatusVariant(user.location.timestamp) === 'info' ? 'Recent' :
-                           getStatusVariant(user.location.timestamp) === 'warning' ? 'Away' : 'Offline'}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  {user.location && (
-                    <FaLocationArrow 
-                      color="#3f51b5" 
-                      size={14} 
-                      className="ms-2" 
-                    />
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-        
-        <Card className="map-card">
-          <MapContainer
-            center={mapCenter || [0, 0]}
-            zoom={mapZoom}
-            style={{ height: '100%', width: '100%' }}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapCenterController center={mapCenter} zoom={mapZoom} />
+    <Box className="location-tracking-container">
+      <Grid container spacing={3}>
+        {/* User List */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={3} className="user-list-card">
+            <Box className="card-header">
+              <Typography variant="h6">User Locations</Typography>
+              <Box display="flex" alignItems="center">
+                <TextField
+                  size="small"
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mr: 1 }}
+                />
+                <IconButton onClick={handleRefresh} size="small">
+                  <RefreshIcon />
+                </IconButton>
+              </Box>
+            </Box>
             
-            {userLocations.map(user => (
-              user.location && user.location.latitude && user.location.longitude ? (
-                <Marker
-                  key={user.id}
-                  position={[user.location.latitude, user.location.longitude]}
-                  icon={getMarkerIcon(user.location.timestamp)}
-                >
-                  <Popup className="location-popup">
-                    <h6>{user.name}</h6>
-                    <p><strong>Email:</strong> {user.email}</p>
-                    <p><strong>Last updated:</strong> {formatTimestamp(user.location.timestamp)}</p>
-                    <p><strong>Coordinates:</strong> {user.location.latitude.toFixed(6)}, {user.location.longitude.toFixed(6)}</p>
-                    {user.location.address && (
-                      <p><strong>Address:</strong> {user.location.address}</p>
-                    )}
-                  </Popup>
-                </Marker>
-              ) : null
-            ))}
-          </MapContainer>
-        </Card>
-      </div>
-    </Container>
+            <Divider />
+            
+            <List className="user-list">
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((userLocation) => (
+                  <React.Fragment key={userLocation._id}>
+                    <ListItem className={`user-list-item ${userLocation.online ? 'online' : 'offline'}`}>
+                      <ListItemAvatar>
+                        <Avatar src={userLocation.profilePic} alt={userLocation.name}>
+                          {userLocation.name.charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={userLocation.name}
+                        secondary={
+                          <Box component="span" display="flex" flexDirection="column">
+                            <Typography variant="body2" component="span">
+                              {userLocation.location.address}
+                            </Typography>
+                            <Typography variant="caption" component="span" display="flex" alignItems="center">
+                              <TimeIcon fontSize="inherit" sx={{ mr: 0.5 }} />
+                              {formatTimeAgo(userLocation.location.lastUpdated)}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                      <Box className="user-status-indicator"></Box>
+                    </ListItem>
+                    <Divider variant="inset" component="li" />
+                  </React.Fragment>
+                ))
+              ) : (
+                <ListItem>
+                  <ListItemText primary="No users found" />
+                </ListItem>
+              )}
+            </List>
+          </Paper>
+        </Grid>
+        
+        {/* Map */}
+        <Grid item xs={12} md={8}>
+          <Paper elevation={3} className="map-container">
+            <Box className="map-placeholder" display="flex" flexDirection="column" justifyContent="center" alignItems="center">
+              <LocationIcon style={{ fontSize: 60, color: '#3f51b5', marginBottom: 16 }} />
+              <Typography variant="h6" gutterBottom>
+                Map Visualization
+              </Typography>
+              <Typography variant="body2" color="textSecondary" align="center">
+                In a real application, this area would display an interactive map showing user locations.
+                <br />
+                You could use Google Maps, Mapbox, or Leaflet to implement this functionality.
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

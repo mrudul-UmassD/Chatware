@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Auth screens
 import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
 import SuperAdminSetupScreen from '../screens/auth/SuperAdminSetupScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
@@ -90,6 +91,11 @@ const MainNavigator = () => {
           <Stack.Screen 
             name="Login" 
             component={LoginScreen} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Register" 
+            component={RegisterScreen} 
             options={{ headerShown: false }}
           />
           <Stack.Screen 
