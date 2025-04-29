@@ -28,14 +28,58 @@ chatware/
 
 - Node.js (v14+)
 - npm or yarn
-- MongoDB
+- MongoDB (local or Atlas)
+
+### Environment Variables Setup
+
+Both the backend and frontend use environment variables for configuration.
+
+1. For the backend:
+   ```bash
+   cd backend
+   cp .env.example .env  # Then edit the .env file with your configuration
+   ```
+
+2. For the web client:
+   ```bash
+   cd frontend/web
+   cp .env.example .env  # Then edit the .env file with your configuration
+   ```
+
+3. For the mobile app:
+   ```bash
+   cd frontend/mobile
+   cp .env.example .env  # Then edit the .env file with your configuration
+   ```
+
+### MongoDB Setup
+
+You have two options for MongoDB setup:
+
+#### Option 1: Local MongoDB
+
+1. Install MongoDB on your local machine
+2. In the backend `.env` file, set:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/chatware
+   ```
+
+#### Option 2: MongoDB Atlas (Cloud)
+
+1. Create an account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster
+3. In the backend `.env` file, set your Atlas credentials:
+   ```
+   MONGODB_USER=your_mongodb_username
+   MONGODB_PASSWORD=your_mongodb_password
+   MONGODB_CLUSTER=your_cluster_name
+   ```
 
 ### Backend Setup
 
 ```bash
 cd backend
 npm install
-cp .env.example .env  # Configure your environment variables
 npm run dev
 ```
 
@@ -76,4 +120,4 @@ API documentation can be found at `/api/docs` when running the backend server.
 2. Create your feature branch: `git checkout -b feature/amazing-feature`
 3. Commit your changes: `git commit -m 'Add some amazing feature'`
 4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a pull request 
+5. Open a pull request
